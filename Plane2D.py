@@ -2236,6 +2236,8 @@ def image_path_to_data_uri(image_path):
 
 def get_header_logo_data_uri():
     candidate_names = [
+        "Logo_ULM.png",
+        "Logo_ULM.svg",
         "logo_ulm.png",
         "logo_ulm.svg",
         "ulm_logo.png",
@@ -2247,10 +2249,19 @@ def get_header_logo_data_uri():
     ]
     search_roots = [Path(__file__).resolve().parent, Path.cwd()]
     for root_path in search_roots:
+        available_files = {
+            path.name.lower(): path for path in root_path.iterdir() if path.is_file()
+        }
         for candidate_name in candidate_names:
             candidate_path = root_path / candidate_name
             if candidate_path.exists():
                 return image_path_to_data_uri(candidate_path)
+
+            # Streamlit Cloud runs on Linux, so "Logo_ULM.png" and "logo_ulm.png"
+            # are different files. Fall back to a case-insensitive directory lookup.
+            matched_path = available_files.get(candidate_name.lower())
+            if matched_path is not None:
+                return image_path_to_data_uri(matched_path)
 
     fallback_svg = build_fallback_ulm_logo_svg().strip().encode("utf-8")
     return f"data:image/svg+xml;base64,{base64.b64encode(fallback_svg).decode('ascii')}"
